@@ -108,11 +108,12 @@ resulting views here:
 
     % cd $TOPDIR/asic-manual/openram-mc/SRAM_32x32_1P_inner
     % ls -1
-    SRAM_32x32_1P_inner.v
-    SRAM_32x32_1P_inner.sp
     SRAM_32x32_1P_inner.gds
     SRAM_32x32_1P_inner.lef
+    SRAM_32x32_1P_inner.sp
     SRAM_32x32_1P_inner_TT_1p1V_25C.lib
+    SRAM_32x32_1P_inner.v
+
 
 You can find more information about the OpenRAM memory generator in this
 recent research paper:
