@@ -30,10 +30,6 @@ from .SRAM_128x256_1P import SRAM_128x256_1P
 # Import new SRAM configuration RTL model
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
-from .SRAM_64x64_1P   import SRAM_64x64_1P
-
-# '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
-
 class SramPRTL( Component ):
 
   def construct( s, data_nbits=32, num_entries=256 ):
@@ -66,11 +62,6 @@ class SramPRTL( Component ):
     # ''' TUTORIAL TASK '''''''''''''''''''''''''''''''''''''''''''''''''
     # Choose new SRAM configuration RTL model
     # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
-
-    elif data_nbits == 64 and num_entries == 64:
-      s.sram = SRAM_64x64_1P()
-
-    # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
     else:
       s.sram = SramGenericPRTL( data_nbits, num_entries )

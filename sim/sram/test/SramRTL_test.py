@@ -21,10 +21,6 @@ sram_configs = [ (16, 32), (32, 256), (128, 256) ]
 # Add (64,64) configuration to sram_configs
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
-sram_configs += [(64,64)]
-
-# '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
-
 # We define the header string here since it is so long. Then reference
 # the header string and include a comment to label each of the columns.
 
@@ -157,47 +153,6 @@ def test_direct_128x256( dump_vcd, test_verilog ):
 # ''' TUTORIAL TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Add directed test for 64x64 configuration
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
-
-#-----------------------------------------------------------------------
-# Directed test for 64x64 SRAM
-#-----------------------------------------------------------------------
-
-def test_direct_64x64( dump_vcd, test_verilog ):
-  dut = SramRTL(64, 64)
-  config_model( dut, dump_vcd, test_verilog )
-  run_test_vector_sim( dut, [ header_str,
-    # val type idx  wdata   rdata
-
-    [ 1,  1,  0x00, 0x00000000, '?'        ], # one at a time
-    [ 1,  0,  0x00, 0x00000000, '?'        ],
-    [ 0,  0,  0x00, 0x00000000, 0x00000000 ],
-    [ 1,  1,  0x00, 0xdeadbeef, '?'        ],
-    [ 1,  0,  0x00, 0x00000000, '?'        ],
-    [ 0,  0,  0x00, 0x00000000, 0xdeadbeef ],
-    [ 1,  1,  0x01, 0xcafecafe, '?'        ],
-    [ 1,  0,  0x01, 0x00000000, '?'        ],
-    [ 0,  0,  0x00, 0x00000000, 0xcafecafe ],
-    [ 1,  1,  0x2f, 0x0a0a0a0a, '?'        ],
-    [ 1,  0,  0x2f, 0x00000000, '?'        ],
-    [ 0,  0,  0x00, 0x00000000, 0x0a0a0a0a ],
-
-    [ 1,  1,  0x2e, 0x0b0b0b0b, '?'        ], # streaming reads
-    [ 1,  0,  0x2e, 0x00000000, '?'        ],
-    [ 1,  0,  0x2f, 0x00000000, 0x0b0b0b0b ],
-    [ 1,  0,  0x01, 0x00000000, 0x0a0a0a0a ],
-    [ 1,  0,  0x00, 0x00000000, 0xcafecafe ],
-    [ 0,  0,  0x00, 0x00000000, 0xdeadbeef ],
-
-    [ 1,  1,  0x2d, 0x0c0c0c0c, '?'        ], # streaming writes/reads
-    [ 1,  0,  0x2d, 0x00000000, '?'        ],
-    [ 1,  1,  0x2c, 0x0d0d0d0d, 0x0c0c0c0c ],
-    [ 1,  0,  0x2c, 0x00000000, '?'        ],
-    [ 1,  1,  0x2b, 0x0e0e0e0e, 0x0d0d0d0d ],
-    [ 1,  0,  0x2b, 0x00000000, '?'        ],
-    [ 0,  0,  0x00, 0x00000000, 0x0e0e0e0e ],
-  ] )
-
-# '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
 #-------------------------------------------------------------------------
 # Random testing
