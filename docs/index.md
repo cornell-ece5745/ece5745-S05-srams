@@ -641,7 +641,7 @@ We can now do a simple placement and routing of the standard cells _and_
 the SRAM macro in the floorplan, and then we can finalize the clock and
 signal routing and add filler cells.
 
-    innovus> placedesign
+    innovus> placeDesign
     innovus> ccopt_design
     innovus> routeDesign
     innovus> setFillerMode -corePrefix FILL -core "FILLCELL_X4 FILLCELL_X2 FILLCELL_X1"
