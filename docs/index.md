@@ -78,8 +78,8 @@ the directory shown below.
     % mkdir -p $TOPDIR/asic-manual/openram-mc
     % cd $TOPDIR/asic-manual/openram-mc
     % more SRAM_32x32_1P-cfg.py
-    word_size = 64
-    num_words = 64
+    word_size = 32
+    num_words = 32
     num_banks = 1
     tech_name = "freepdk45"
     process_corners = ["TT"]
@@ -101,7 +101,7 @@ tools.
 You can use the following command to run the OpenRAM memory generator.
 
     % cd $TOPDIR/asic-manual/openram-mc
-    % openram -v SRAM_32x32_1P_inner.py
+    % openram -v SRAM_32x32_1P-cfg.py
 
 It will take a few minutes to generate the SRAM macro. You can see the
 resulting views here:
