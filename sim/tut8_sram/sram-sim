@@ -23,7 +23,7 @@ import sys
 
 sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while sim_dir:
-  if os.path.exists( sim_dir + os.path.sep + ".pymtl_sim_root" ):
+  if os.path.exists( sim_dir + os.path.sep + "pymtl.ini" ):
     sys.path.insert(0,sim_dir)
     break
   sim_dir = os.path.dirname(sim_dir)
@@ -32,12 +32,12 @@ import argparse
 import re
 import random
 
-from pymtl3                            import *
-from pymtl3.stdlib.test                import config_model
-from pymtl3.passes.backends.verilog    import VerilogPlaceholderPass
+from pymtl3                                        import *
+from pymtl3.stdlib.test_utils                      import config_model_with_cmdline_opts
+from pymtl3.passes.backends.verilog                import VerilogPlaceholderPass
 
-from tut8_sram.SramMinionRTL           import SramMinionRTL
-from tut8_sram.test.SramMinionRTL_test import random_msgs, allN_msgs, TestHarness
+from tut8_sram.SramMinionRTL                       import SramMinionRTL
+from tut8_sram.test.SramMinionRTL_test             import random_msgs, allN_msgs, TestHarness
 
 #-------------------------------------------------------------------------
 # Command line processing
@@ -70,6 +70,7 @@ def parse_cmdline():
   p.add_argument( "--stats",     action="store_true" )
   p.add_argument( "--translate", action="store_true" )
   p.add_argument( "--dump-vcd",  action="store_true" )
+  p.add_argument( "--dump-vtb",  action="store_true" )
 
   opts = p.parse_args()
   if opts.help: p.error()
@@ -101,12 +102,13 @@ def main():
 
   model = model_impl_dict[ opts.impl ]
 
-  # Create VCD filename
+  # Create VCD filename, translate cmdline opts
 
-  if opts.dump_vcd:
-    vcd_file_name = f"sram-{opts.impl}-{opts.input}"
-  else:
-    vcd_file_name = ""
+  cmdline_opts = {
+    'dump_vcd': f"sram-{opts.impl}-{opts.input}" if opts.dump_vcd else '',
+    'dump_vtb': f"sram-{opts.impl}-{opts.input}" if opts.dump_vtb else '',
+    'test_verilog': 'zeros' if opts.translate else '',
+  }
 
   # Create test harness (we can reuse the harness from unit testing)
 
@@ -117,27 +119,17 @@ def main():
 
   # Configure the test harness component
 
-  config_model( th, vcd_file_name, opts.translate, ['sram'] )
+  config_model_with_cmdline_opts( th, cmdline_opts, ['sram'] )
 
-  # Setup the test harness
-
-  th.elaborate()
-
-  # Apply placeholder pass
-
-  th.apply( VerilogPlaceholderPass() )
-
-  # We can call apply if we are 100% sure the top level is not tagged
-
-  th.apply( TranslationImportPass() )
+  # Apply necessary passes
 
   # Create a simulator
 
-  th.apply( SimulationPass() )
+  th.apply( DefaultPassGroup( linetrace=opts.trace ) )
 
   # Reset test harness
 
-  th.sim_reset( print_line_trace=opts.trace )
+  th.sim_reset()
 
   # 2 cycles to reset
 
@@ -149,14 +141,14 @@ def main():
     if opts.trace:
       th.print_line_trace()
 
-    th.tick()
+    th.sim_tick()
     ncycles += 1
 
   # Extra ticks to make VCD easier to read
 
-  th.tick()
-  th.tick()
-  th.tick()
+  th.sim_tick()
+  th.sim_tick()
+  th.sim_tick()
 
 main()
 

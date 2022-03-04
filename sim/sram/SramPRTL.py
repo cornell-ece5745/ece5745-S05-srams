@@ -21,58 +21,91 @@
 #  port0_rdata   O          read data output
 #
 
-from pymtl3           import *
-from .SramGenericPRTL import SramGenericPRTL
-from .SRAM_32x256_1P  import SRAM_32x256_1P
-from .SRAM_128x256_1P import SRAM_128x256_1P
-
-# ''' TUTORIAL TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
-# Import new SRAM configuration RTL model
-# '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+from pymtl3            import *
+from .SramGenericPRTL  import SramGenericPRTL
+from .SRAM_32x256_1rw  import SRAM_32x256_1rw
+from .SRAM_128x256_1rw import SRAM_128x256_1rw
+from .SRAM_64x64_1rw   import SRAM_64x64_1rw
 
 class SramPRTL( Component ):
 
-  def construct( s, data_nbits=32, num_entries=256 ):
+  def construct( s, data_nbits=32, num_entries=256, mask_size=0 ):
 
     idx_nbits = clog2( num_entries )      # address width
     nbytes    = int( data_nbits + 7 ) // 8 # $ceil(data_nbits/8)
 
     s.port0_val   = InPort ()
     s.port0_type  = InPort ()
-    s.port0_idx   = InPort ( mk_bits(idx_nbits) )
-    s.port0_wdata = InPort ( mk_bits(data_nbits) )
-    s.port0_rdata = OutPort( mk_bits(data_nbits) )
+    s.port0_idx   = InPort ( idx_nbits )
+    s.port0_wdata = InPort ( data_nbits )
+    s.port0_rdata = OutPort( data_nbits )
+
+    s.mask_size = mask_size
+    if mask_size > 0:
+      s.port0_wben  = InPort( mask_size )
 
     # Inverters
 
-    s.port0_val_bar  = Wire()
-    s.port0_type_bar = Wire()
-
-    s.port0_val_bar  //= lambda: ~s.port0_val
-    s.port0_type_bar //= lambda: ~s.port0_type
+    s.port0_val_bar = Wire()
+    s.port0_val_bar //= lambda: ~s.port0_val
 
     # if you have implemented a new SRAM, make sure use it
     # here instead of the generic one.
 
-    if   data_nbits == 32 and num_entries == 256:
-      s.sram = SRAM_32x256_1P()
-    elif data_nbits == 128 and num_entries == 256:
-      s.sram = SRAM_128x256_1P()
+    if data_nbits == 128 and num_entries == 256 and mask_size > 0:
+      assert mask_size == 4, "We only support dividing 128x256 into four 32x256"
 
-    # ''' TUTORIAL TASK '''''''''''''''''''''''''''''''''''''''''''''''''
-    # Choose new SRAM configuration RTL model
-    # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+      s.webs = Wire( mask_size )
+      for i in range(mask_size):
+        s.webs[i] //= lambda: ~(s.port0_type & s.port0_wben[i])
+
+      s.srams = [ SRAM_32x256_1rw() for _ in range(4) ]
+
+      for i, m in enumerate( s.srams ):
+        m.clk0  //= s.clk
+        m.csb0  //= s.port0_val_bar  # csb0 low-active
+        m.web0  //= s.webs[i] # web0 low-active
+        m.addr0 //= s.port0_idx
+        m.din0  //= s.port0_wdata[i*32:(i+1)*32]
+        m.dout0 //= s.port0_rdata[i*32:(i+1)*32]
 
     else:
-      s.sram = SramGenericPRTL( data_nbits, num_entries )
+      assert mask_size == 0, "We only support dividing 128x256 into four 32x256"
 
-    s.sram.CE1  //= s.clk
-    s.sram.CSB1 //= s.port0_val_bar  # CSB1 low-active
-    s.sram.OEB1 //= 0
-    s.sram.WEB1 //= s.port0_type_bar # WEB1 low-active
-    s.sram.A1   //= s.port0_idx
-    s.sram.I1   //= s.port0_wdata
-    s.sram.O1   //= s.port0_rdata
+      s.port0_type_bar = Wire()
+      s.port0_type_bar //= lambda: ~s.port0_type
+
+      if data_nbits == 32 and num_entries == 256:
+        s.sram = m = SRAM_32x256_1rw()
+        m.clk0  //= s.clk
+        m.csb0  //= s.port0_val_bar  # csb0 low-active
+        m.web0  //= s.port0_type_bar # web0 low-active
+        m.addr0 //= s.port0_idx
+        m.din0  //= s.port0_wdata
+        m.dout0 //= s.port0_rdata
+
+      elif data_nbits == 64 and num_entries == 64:
+        s.sram = m = SRAM_64x64_1rw()
+        m.clk0  //= s.clk
+        m.csb0  //= s.port0_val_bar  # csb0 low-active
+        m.web0  //= s.port0_type_bar # web0 low-active
+        m.addr0 //= s.port0_idx
+        m.din0  //= s.port0_wdata
+        m.dout0 //= s.port0_rdata
+
+      else:
+        s.sram = m = SramGenericPRTL( data_nbits, num_entries )
+        m.clk0  //= s.clk
+        m.csb0  //= s.port0_val_bar  # csb0 low-active
+        m.web0  //= s.port0_type_bar # web0 low-active
+        m.addr0 //= s.port0_idx
+        m.din0  //= s.port0_wdata
+        m.dout0 //= s.port0_rdata
 
   def line_trace( s ):
-    return "(A1={} I1={} O1={})".format( s.sram.A1, s.sram.I1, s.sram.O1 )
+    try:
+      print(s.webs, s.port0_wben)
+    except: pass
+    if s.mask_size == 0:
+      return f"(addr0={s.sram.addr0} din0={s.sram.din0} dout0={s.sram.dout0})"
+    return "".join([ f"(addr0={x.addr0} din0={x.din0} dout0={x.dout0})" for x in s.srams ])

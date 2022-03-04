@@ -7,14 +7,15 @@ from __future__ import print_function
 import pytest
 import random
 
-from pymtl3             import *
-from pymtl3.stdlib.test import mk_test_case_table, run_sim, config_model
-from pymtl3.stdlib.test import TestSrcCL, TestSinkCL
-from pymtl3.stdlib.ifcs import mk_mem_msg, MemMsgType
+from pymtl3                   import *
+from pymtl3.stdlib            import stream
+from pymtl3.stdlib.test_utils import mk_test_case_table, run_sim, config_model_with_cmdline_opts
+from pymtl3.stdlib.test_utils import TestSrcCL, TestSinkCL
+from pymtl3.stdlib.mem        import mk_mem_msg, MemMsgType
 
-from tut8_sram.SramMinionRTL import SramMinionRTL
+from tut8_sram.SramMinionRTL  import SramMinionRTL
 
-MemReqType, MemRespType = mk_mem_msg( 8, 32, 64 )
+MemReqType, MemRespType = mk_mem_msg( 8, 32, 32 )
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -26,9 +27,9 @@ class TestHarness( Component ):
 
     # Instantiate models
 
-    s.src  = TestSrcCL( MemReqType )
+    s.src  = stream.SourceRTL( MemReqType )
     s.sram = dut
-    s.sink = TestSinkCL( MemRespType )
+    s.sink = stream.SinkRTL( MemRespType )
 
     # Connect
 
@@ -64,19 +65,19 @@ def resp( type_, opaque, len, data ):
 def basic_single_msgs():
   return [
     #    type  opq  addr   len data                        type  opq len data
-    req( 'wr', 0x0, 0x0000, 0, 0xdeadbeefcafe0123 ), resp( 'wr', 0x0, 0, 0                  ),
-    req( 'rd', 0x1, 0x0000, 0, 0                  ), resp( 'rd', 0x1, 0, 0xdeadbeefcafe0123 ),
+    req( 'wr', 0x0, 0x0000, 0, 0xdeadbeef ), resp( 'wr', 0x0, 0, 0          ),
+    req( 'rd', 0x1, 0x0000, 0, 0          ), resp( 'rd', 0x1, 0, 0xdeadbeef ),
   ]
 
 def basic_multiple_msgs():
   return [
     #    type  opq  addr   len data                        type  opq len data
-    req( 'wr', 0x0, 0x0000, 0, 0xdeadbeefcafe0123 ), resp( 'wr', 0x0, 0, 0                  ),
-    req( 'rd', 0x1, 0x0000, 0, 0                  ), resp( 'rd', 0x1, 0, 0xdeadbeefcafe0123 ),
-    req( 'wr', 0x2, 0x0008, 0, 0x0a0b0c0d0e0f0102 ), resp( 'wr', 0x2, 0, 0                  ),
-    req( 'rd', 0x3, 0x0008, 0, 0                  ), resp( 'rd', 0x3, 0, 0x0a0b0c0d0e0f0102 ),
-    req( 'wr', 0x4, 0x01f8, 0, 0x4213421342134213 ), resp( 'wr', 0x4, 0, 0                  ),
-    req( 'rd', 0x5, 0x01f8, 0, 0                  ), resp( 'rd', 0x5, 0, 0x4213421342134213 ),
+    req( 'wr', 0x0, 0x0000, 0, 0xcafe0123 ), resp( 'wr', 0x0, 0, 0          ),
+    req( 'rd', 0x1, 0x0000, 0, 0          ), resp( 'rd', 0x1, 0, 0xcafe0123 ),
+    req( 'wr', 0x2, 0x0008, 0, 0x0a0b0c0d ), resp( 'wr', 0x2, 0, 0          ),
+    req( 'rd', 0x3, 0x0008, 0, 0          ), resp( 'rd', 0x3, 0, 0x0a0b0c0d ),
+    req( 'wr', 0x4, 0x01f8, 0, 0x42134213 ), resp( 'wr', 0x4, 0, 0          ),
+    req( 'rd', 0x5, 0x01f8, 0, 0          ), resp( 'rd', 0x5, 0, 0x42134213 ),
   ]
 
 #----------------------------------------------------------------------
@@ -90,31 +91,31 @@ def random_msgs():
   rgen = random.Random()
   rgen.seed(0xa4e28cc2)
 
-  vmem = [ rgen.randint(0,0xffffffffffffffff) for _ in range(64) ]
+  vmem = [ rgen.randint(0,0xffffffff) for _ in range(128) ]
   msgs = []
 
-  # Force this to be 64 because there are 64 entries in the SRAM
-  for i in range(64):
+  # Force this to be 128 because there are 128 entries in the SRAM
+  for i in range(128):
     msgs.extend([
-      req( 'wr', i, base_addr+8*i, 0, vmem[i] ), resp( 'wr', i, 0, 0 ),
+      req( 'wr', i, base_addr+4*i, 0, vmem[i] ), resp( 'wr', i, 0, 0 ),
     ])
 
-  for i in range(64):
-    idx = rgen.randint(0,63)
+  for i in range(128):
+    idx = rgen.randint(0,127)
 
     if rgen.randint(0,1):
 
       correct_data = vmem[idx]
       msgs.extend([
-        req( 'rd', i, base_addr+8*idx, 0, 0 ), resp( 'rd', i, 0, correct_data ),
+        req( 'rd', i, base_addr+4*idx, 0, 0 ), resp( 'rd', i, 0, correct_data ),
       ])
 
     else:
 
-      new_data = rgen.randint(0,0xffffffffffffffff)
+      new_data = rgen.randint(0,0xffffffff)
       vmem[idx] = new_data
       msgs.extend([
-        req( 'wr', i, base_addr+8*idx, 0, new_data ), resp( 'wr', i, 0, 0 ),
+        req( 'wr', i, base_addr+4*idx, 0, new_data ), resp( 'wr', i, 0, 0 ),
       ])
 
   return msgs
@@ -132,14 +133,14 @@ def allN_msgs( num ):
 
   msgs = []
 
-  # Force this to be 64 because there are 64 entries in the SRAM
-  for i in range(64):
+  # Force this to be 128 because there are 128 entries in the SRAM
+  for i in range(128):
     msgs.extend([
       req( 'wr', i, base_addr+4*i, 0, num ), resp( 'wr', i, 0, 0 ),
     ])
 
   for i in range(150):
-    idx = rgen.randint(0,63)
+    idx = rgen.randint(0,127)
 
     if rgen.randint(0,1):
       correct_data = num
@@ -172,7 +173,7 @@ test_case_table = mk_test_case_table([
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( **test_case_table )
-def test( test_params, dump_vcd, test_verilog ):
+def test( test_params, cmdline_opts ):
 
   # instantiate test harness
 
@@ -192,11 +193,7 @@ def test( test_params, dump_vcd, test_verilog ):
     initial_delay=test_params.sink,
     interval_delay=test_params.sink )
 
-  # elaborate, configure, and run the simulation
+  # run the simulation
 
-  top.elaborate()
-
-  config_model( top, dump_vcd, test_verilog, ['sram'] )
-
-  run_sim( top )
+  run_sim( top, cmdline_opts, duts=['sram'] )
 

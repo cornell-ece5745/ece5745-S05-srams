@@ -25,16 +25,13 @@
 `define SRAM_SRAM_VRTL
 
 `include "sram/SramGenericVRTL.v"
-`include "sram/SRAM_32x256_1P.v"
-`include "sram/SRAM_128x256_1P.v"
+`include "sram/SRAM_32x256_1rw.v"
+`include "sram/SRAM_64x64_1rw.v"
+`include "sram/SRAM_128x256_1rw.v"
 
 // ''' TUTORIAL TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
 // Include new SRAM configuration RTL model
 // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
-
-`include "sram/SRAM_64x64_1P.v"
-
-// '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
 module sram_SramVRTL
 #(
@@ -54,34 +51,25 @@ module sram_SramVRTL
   output logic [p_data_nbits-1:0]   port0_rdata
 );
 
-  logic                     CE1;
-  logic                     WEB1;
-  logic                     OEB1;
-  logic                     CSB1;
-  logic [c_addr_nbits-1:0]  A1;
-  logic [p_data_nbits-1:0]  I1;
-  logic [p_data_nbits-1:0]  O1;
+  logic                     clk0;
+  logic                     web0;
+  logic                     csb0;
+  logic [c_addr_nbits-1:0]  addr0;
+  logic [p_data_nbits-1:0]  din0;
+  logic [p_data_nbits-1:0]  dout0;
 
-  assign CE1  = clk;
-  assign WEB1 = ~port0_type;
-  assign OEB1 = 1'b0;
-  assign CSB1 = ~port0_val;
-  assign A1   = port0_idx;
-  assign I1   = port0_wdata;
+  assign clk0  = clk;
+  assign web0  = ~port0_type;
+  assign csb0  = ~port0_val;
+  assign addr0 = port0_idx;
+  assign din0  = port0_wdata;
 
-  assign port0_rdata = O1;
+  assign port0_rdata = dout0;
 
   generate
-    if      ( p_data_nbits == 32  && p_num_entries == 256 ) SRAM_32x256_1P  sram (.*);
-    else if ( p_data_nbits == 128 && p_num_entries == 256 ) SRAM_128x256_1P sram (.*);
-
-    // ''' TUTORIAL TASK '''''''''''''''''''''''''''''''''''''''''''''''''
-    // Choose new SRAM configuration RTL model
-    // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
-
-    else if ( p_data_nbits == 64 && p_num_entries == 64 )   SRAM_64x64_1P   sram (.*);
-
-    // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
+    if      ( p_data_nbits == 32  && p_num_entries == 256 ) SRAM_32x256_1rw  sram (.*);
+    else if ( p_data_nbits == 64  && p_num_entries == 64  ) SRAM_64x64_1rw   sram (.*);
+    else if ( p_data_nbits == 128 && p_num_entries == 256 ) SRAM_128x256_1rw sram (.*);
 
     else
       sram_SramGenericVRTL#(p_data_nbits,p_num_entries) sram (.*);
