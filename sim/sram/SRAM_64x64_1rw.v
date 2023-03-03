@@ -5,7 +5,7 @@
 `ifndef SRAM_64x64_1rw
 `define SRAM_64x64_1rw
 
-`include "sram/SramGenericVRTL.v"
+`include "sram/SramGeneric.v"
 
 `ifndef SYNTHESIS
 
@@ -19,7 +19,7 @@ module SRAM_64x64_1rw
   output logic [63:0] dout0
 );
 
-  sram_SramGenericVRTL
+  sram_SramGeneric
   #(
     .p_data_nbits  (64),
     .p_num_entries (64)

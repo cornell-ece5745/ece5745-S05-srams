@@ -21,19 +21,20 @@
 //  port0_rdata   O          read data output
 //
 
-`ifndef SRAM_SRAM_VRTL
-`define SRAM_SRAM_VRTL
+`ifndef SRAM_SRAM_V
+`define SRAM_SRAM_V
 
-`include "sram/SramGenericVRTL.v"
+`include "sram/SramGeneric.v"
 `include "sram/SRAM_32x256_1rw.v"
 `include "sram/SRAM_64x64_1rw.v"
 `include "sram/SRAM_128x256_1rw.v"
+`include "sram/SRAM_32x128_1rw.v"
 
 // ''' TUTORIAL TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
 // Include new SRAM configuration RTL model
 // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
-module sram_SramVRTL
+module sram_Sram
 #(
   parameter p_data_nbits  = 32,
   parameter p_num_entries = 256,
@@ -70,13 +71,14 @@ module sram_SramVRTL
     if      ( p_data_nbits == 32  && p_num_entries == 256 ) SRAM_32x256_1rw  sram (.*);
     else if ( p_data_nbits == 64  && p_num_entries == 64  ) SRAM_64x64_1rw   sram (.*);
     else if ( p_data_nbits == 128 && p_num_entries == 256 ) SRAM_128x256_1rw sram (.*);
+    else if ( p_data_nbits == 32  && p_num_entries == 128 ) SRAM_32x128_1rw  sram (.*);
 
     else
-      sram_SramGenericVRTL#(p_data_nbits,p_num_entries) sram (.*);
+      sram_SramGeneric#(p_data_nbits,p_num_entries) sram (.*);
 
   endgenerate
 
 endmodule
 
-`endif /* SRAM_SRAM_VRTL */
+`endif /* SRAM_SRAM_V */
 

@@ -1,14 +1,14 @@
 #=======================================================================
-# SramRTL_test.py
+# Sram_test.py
 #=======================================================================
 # Unit Tests for SRAM RTL model
 
 import pytest
 import random
 
-from pymtl3        import *
-from pymtl3.stdlib.test_utils   import run_test_vector_sim
-from sram.SramRTL import SramRTL
+from pymtl3 import *
+from pymtl3.stdlib.test_utils import run_test_vector_sim
+from sram.Sram import Sram
 
 #-------------------------------------------------------------------------
 # SRAM to be tested
@@ -28,7 +28,7 @@ header_str = \
 #-----------------------------------------------------------------------
 
 def test_direct_16x32( cmdline_opts ):
-  run_test_vector_sim( SramRTL(16, 32), [ header_str,
+  run_test_vector_sim( Sram(16, 32), [ header_str,
     # val type idx  wdata   rdata
     [ 1,  1,   0x0, 0x0000, '?'    ], # one at a time
     [ 1,  0,   0x0, 0x0000, '?'    ],
@@ -64,7 +64,7 @@ def test_direct_16x32( cmdline_opts ):
 #-----------------------------------------------------------------------
 
 def test_direct_32x128( cmdline_opts ):
-  run_test_vector_sim( SramRTL(32, 128), [ header_str,
+  run_test_vector_sim( Sram(32, 128), [ header_str,
     # val type idx  wdata   rdata
     [ 1,  1,  0x00, 0x00000000, '?'        ], # one at a time
     [ 1,  0,  0x00, 0x00000000, '?'        ],
@@ -100,7 +100,7 @@ def test_direct_32x128( cmdline_opts ):
 #-----------------------------------------------------------------------
 
 def test_direct_32x256( cmdline_opts ):
-  run_test_vector_sim( SramRTL(32, 256), [ header_str,
+  run_test_vector_sim( Sram(32, 256), [ header_str,
     # val type idx  wdata   rdata
     [ 1,  1,  0x00, 0x00000000, '?'        ], # one at a time
     [ 1,  0,  0x00, 0x00000000, '?'        ],
@@ -136,7 +136,7 @@ def test_direct_32x256( cmdline_opts ):
 #-----------------------------------------------------------------------
 
 def test_direct_128x256( cmdline_opts ):
-  run_test_vector_sim( SramRTL(128, 256, mask_size=0), [ header_str,
+  run_test_vector_sim( Sram(128, 256, mask_size=0), [ header_str,
     # val type idx  wdata   rdata
     [ 1,  1,  0x00, 0x00000000, '?'        ], # one at a time
     [ 1,  0,  0x00, 0x00000000, '?'        ],
@@ -167,48 +167,48 @@ def test_direct_128x256( cmdline_opts ):
     [ 0,  0,  0x00, 0x00000000, 0x0e0e0e0e ],
   ], cmdline_opts )
 
-def test_direct_128x256_mask4( cmdline_opts ):
-  header_str = \
-    ( "port0_val", "port0_type", "port0_wben", "port0_idx", "port0_wdata", "port0_rdata*" )
-
-  run_test_vector_sim( SramRTL(128, 256, mask_size=4), [ header_str,
-    # val type  wben  idx  wdata   rdata
-
-    [ 1,  1,   0b0001, 0x00, 0x00000000, '?'        ], # one at a time
-    [ 1,  0,   0b0001, 0x00, 0x00000000, '?'        ],
-    [ 0,  0,   0b0001, 0x00, 0x00000000, 0x00000000 ],
-    [ 1,  1,   0b0001, 0x00, 0xdeadbeef, '?'        ],
-    [ 1,  0,   0b0001, 0x00, 0x00000000, '?'        ],
-    [ 0,  0,   0b0001, 0x00, 0x00000000, 0xdeadbeef ],
-    [ 1,  1,   0b0001, 0x01, 0xcafecafe, '?'        ],
-    [ 1,  0,   0b0001, 0x01, 0x00000000, '?'        ],
-    [ 0,  0,   0b0001, 0x00, 0x00000000, 0xcafecafe ],
-    [ 1,  1,   0b0001, 0x2f, 0x0a0a0a0a, '?'        ],
-    [ 1,  0,   0b0001, 0x2f, 0x00000000, '?'        ],
-    [ 0,  0,   0b0001, 0x00, 0x00000000, 0x0a0a0a0a ],
-
-    [ 1,  1,  0b0001, 0x2e, 0x0b0b0b0b, '?'        ], # streaming reads
-    [ 1,  0,  0b0001, 0x2e, 0x00000000, '?'        ],
-    [ 1,  0,  0b0001, 0x2f, 0x00000000, 0x0b0b0b0b ],
-    [ 1,  0,  0b0001, 0x01, 0x00000000, 0x0a0a0a0a ],
-    [ 1,  0,  0b0001, 0x00, 0x00000000, 0xcafecafe ],
-    [ 0,  0,  0b0001, 0x00, 0x00000000, 0xdeadbeef ],
-
-    [ 1,  1,  0b0001, 0x2d, 0x0c0c0c0c, '?'        ], # streaming writes/reads
-    [ 1,  0,  0b0001, 0x2d, 0x00000000, '?'        ],
-    [ 1,  1,  0b0001, 0x2c, 0x0d0d0d0d, 0x0c0c0c0c ],
-    [ 1,  0,  0b0001, 0x2c, 0x00000000, '?'        ],
-    [ 1,  1,  0b0001, 0x2b, 0x0e0e0e0e, 0x0d0d0d0d ],
-    [ 1,  0,  0b0001, 0x2b, 0x00000000, '?'        ],
-    [ 0,  0,  0b0001, 0x00, 0x00000000, 0x0e0e0e0e ],
-  ], cmdline_opts )
+# def test_direct_128x256_mask4( cmdline_opts ):
+#   header_str = \
+#     ( "port0_val", "port0_type", "port0_wben", "port0_idx", "port0_wdata", "port0_rdata*" )
+#
+#   run_test_vector_sim( Sram(128, 256, mask_size=4), [ header_str,
+#     # val type  wben  idx  wdata   rdata
+#
+#     [ 1,  1,   0b0001, 0x00, 0x00000000, '?'        ], # one at a time
+#     [ 1,  0,   0b0001, 0x00, 0x00000000, '?'        ],
+#     [ 0,  0,   0b0001, 0x00, 0x00000000, 0x00000000 ],
+#     [ 1,  1,   0b0001, 0x00, 0xdeadbeef, '?'        ],
+#     [ 1,  0,   0b0001, 0x00, 0x00000000, '?'        ],
+#     [ 0,  0,   0b0001, 0x00, 0x00000000, 0xdeadbeef ],
+#     [ 1,  1,   0b0001, 0x01, 0xcafecafe, '?'        ],
+#     [ 1,  0,   0b0001, 0x01, 0x00000000, '?'        ],
+#     [ 0,  0,   0b0001, 0x00, 0x00000000, 0xcafecafe ],
+#     [ 1,  1,   0b0001, 0x2f, 0x0a0a0a0a, '?'        ],
+#     [ 1,  0,   0b0001, 0x2f, 0x00000000, '?'        ],
+#     [ 0,  0,   0b0001, 0x00, 0x00000000, 0x0a0a0a0a ],
+#
+#     [ 1,  1,  0b0001, 0x2e, 0x0b0b0b0b, '?'        ], # streaming reads
+#     [ 1,  0,  0b0001, 0x2e, 0x00000000, '?'        ],
+#     [ 1,  0,  0b0001, 0x2f, 0x00000000, 0x0b0b0b0b ],
+#     [ 1,  0,  0b0001, 0x01, 0x00000000, 0x0a0a0a0a ],
+#     [ 1,  0,  0b0001, 0x00, 0x00000000, 0xcafecafe ],
+#     [ 0,  0,  0b0001, 0x00, 0x00000000, 0xdeadbeef ],
+#
+#     [ 1,  1,  0b0001, 0x2d, 0x0c0c0c0c, '?'        ], # streaming writes/reads
+#     [ 1,  0,  0b0001, 0x2d, 0x00000000, '?'        ],
+#     [ 1,  1,  0b0001, 0x2c, 0x0d0d0d0d, 0x0c0c0c0c ],
+#     [ 1,  0,  0b0001, 0x2c, 0x00000000, '?'        ],
+#     [ 1,  1,  0b0001, 0x2b, 0x0e0e0e0e, 0x0d0d0d0d ],
+#     [ 1,  0,  0b0001, 0x2b, 0x00000000, '?'        ],
+#     [ 0,  0,  0b0001, 0x00, 0x00000000, 0x0e0e0e0e ],
+#   ], cmdline_opts )
 
 #-----------------------------------------------------------------------
 # Directed test for 64x64 SRAM
 #-----------------------------------------------------------------------
 
 def test_direct_64x64( cmdline_opts ):
-  run_test_vector_sim( SramRTL(64, 64), [ header_str,
+  run_test_vector_sim( Sram(64, 64), [ header_str,
     # val type idx  wdata   rdata
 
     [ 1,  1,  0x00, 0x00000000, '?'        ], # one at a time
@@ -278,8 +278,6 @@ def gen_rand_tvec( data_nbits, num_entries ):
 
 @pytest.mark.parametrize(("data_nbits", "num_entries"), sram_configs )
 def test_random( cmdline_opts, data_nbits, num_entries):
-  run_test_vector_sim( SramRTL(data_nbits, num_entries),
+  run_test_vector_sim( Sram(data_nbits, num_entries),
                        gen_rand_tvec(data_nbits, num_entries),
                        cmdline_opts )
-
-

@@ -8,7 +8,7 @@
 `ifndef SRAM_SRAM_GENERIC_V
 `define SRAM_SRAM_GENERIC_V
 
-module sram_SramGenericVRTL
+module sram_SramGeneric
 #(
   parameter p_data_nbits  = 1,
   parameter p_num_entries = 2,

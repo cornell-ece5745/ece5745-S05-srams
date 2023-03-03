@@ -36,7 +36,7 @@ from pymtl3                                        import *
 from pymtl3.stdlib.test_utils                      import config_model_with_cmdline_opts
 from pymtl3.passes.backends.verilog                import VerilogPlaceholderPass
 
-from tut8_sram.SramMinionRTL                       import SramMinionRTL
+from tut8_sram.SramMinion                          import SramMinion
 from tut8_sram.test.SramMinionRTL_test             import random_msgs, allN_msgs, TestHarness
 
 #-------------------------------------------------------------------------
@@ -97,7 +97,7 @@ def main():
   # Instantiate the model
 
   model_impl_dict = {
-    'rtl' : SramMinionRTL,
+    'rtl' : SramMinion,
   }
 
   model = model_impl_dict[ opts.impl ]

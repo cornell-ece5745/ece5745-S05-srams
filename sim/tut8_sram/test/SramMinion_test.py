@@ -13,7 +13,7 @@ from pymtl3.stdlib.test_utils import mk_test_case_table, run_sim, config_model_w
 from pymtl3.stdlib.test_utils import TestSrcCL, TestSinkCL
 from pymtl3.stdlib.mem        import mk_mem_msg, MemMsgType
 
-from tut8_sram.SramMinionRTL  import SramMinionRTL
+from tut8_sram.SramMinion     import SramMinion
 
 MemReqType, MemRespType = mk_mem_msg( 8, 32, 32 )
 
@@ -177,7 +177,7 @@ def test( test_params, cmdline_opts ):
 
   # instantiate test harness
 
-  top = TestHarness( SramMinionRTL() )
+  top = TestHarness( SramMinion() )
 
   # configure the src/sink messages
 

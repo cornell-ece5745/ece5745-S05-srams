@@ -80,17 +80,17 @@
 // you still don't have anywhere to put the message currently in M1.
 //
 
-`ifndef TUT8_SRAM_MINION_VRTL_V
-`define TUT8_SRAM_MINION_VRTL_V
+`ifndef TUT8_SRAM_MINION_V
+`define TUT8_SRAM_MINION_V
 
 `include "vc/mem-msgs.v"
 `include "vc/queues.v"
 `include "vc/assert.v"
 `include "vc/trace.v"
 
-`include "sram/SramVRTL.v"
+`include "sram/Sram.v"
 
-module tut8_sram_SramMinionVRTL
+module tut8_sram_SramMinion
 (
   input  logic         clk,
   input  logic         reset,
@@ -159,7 +159,7 @@ module tut8_sram_SramMinionVRTL
 
   // Instantiate SRAM
 
-  sram_SramVRTL#(32,128) sram
+  sram_Sram#(32,128) sram
   (
     .clk         (clk),
     .reset       (reset),
@@ -292,5 +292,5 @@ module tut8_sram_SramMinionVRTL
 
 endmodule
 
-`endif /* TUT8_SRAM_MINION_VRTL_V */
+`endif /* TUT8_SRAM_MINION_V */
 
