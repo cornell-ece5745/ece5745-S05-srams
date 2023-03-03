@@ -36,13 +36,19 @@ designs. Finally, we will put the these two pieces together to combine
 synthesizable RTL with SRAM macros and push the composition through the
 ASIC toolflow.
 
-The first step is to start MobaXterm and then `ssh` into `ecelinux`. Once
-you are at the `ecelinux` prompt, source the setup script, clone this
-repository from GitHub, and define an environment variable to keep track
-of the top directory for the project.
+The first step is to access `ecelinux`. You can use VS Code for working
+at the command line, but you will also need to a remote access option
+that supports Linux applications with a GUI such as X2Go, MobaXterm, or
+Mac Terminal with XQuartz. Once you are at the `ecelinux` prompt, source
+the setup script, clone this repository from GitHub, and define an
+environment variable to keep track of the top directory for the project.
 
-    % source setup-ece5745.sh
-    % mkdir $HOME/ece5745
+**NOTE: You need to use the `--2022` command line option with the setup
+script since the code in this repo has not been updated to work with the
+2023 environment.**
+
+    % source setup-ece5745.sh --2022
+    % mkdir -p $HOME/ece5745
     % cd $HOME/ece5745
     % git clone git@github.com:cornell-ece5745/ece5745-S05-srams sec5
     % cd sec5
@@ -187,13 +193,11 @@ model in the `sim/sram` subdirectory.
     % cd $TOPDIR/sim/sram
     % ls
     ...
-    SramPRTL.py
-    SramVRTL.v
-    SramRTL.py
+    SramGeneric.v
+    Sram.v
 
-There is both a PyMTL and Verilog version. Both are parameterized by the
-number of words and the bits per word, and both have the same pin-level
-interface:
+The SRAM model is parameterized by the number of words and the bits per
+word, and has the following pin-level interface:
 
  - `port0_val`: port enable
  - `port0_type`: transaction type (0 = read, 1 = write)
@@ -238,10 +242,10 @@ Verilog version (we will provide you a similar PyMTL version for you to
 use):
 
     % cd $TOPDIR/sim/tut8_sram
-    % more SramMinionVRTL.v
-    `include "sram/SramVRTL.v"
+    % more SramMinion.v
+    `include "sram/Sram.v"
     ...
-    sram_SramVRTL#(32,128) sram
+    sram_Sram#(32,128) sram
     (
       .clk         (clk),
       .reset       (reset),
@@ -252,14 +256,14 @@ use):
       .port0_rdata (sram_read_data_M1)
     );
 
-To use an SRAM in a Verilog model, simply include `sram/SramVRTL.v`,
+To use an SRAM in a Verilog model, simply include `sram/Sram.v`,
 instantiate the SRAM, and set the number of words and number of bits per
 word. We can run a test on the SRAM minion wrapper like this:
 
 ```
  % mkdir -p $TOPDIR/sim/build
  % cd $TOPDIR/sim/build
- % pytest ../tut8_sram/test/SramMinionRTL_test.py -k random_0_3 -s
+ % pytest ../tut8_sram/test/SramMinion_test.py -k random_0_3 -s
   1r                           > (  (). ) > .
   2r                           > (  (). ) > .
   3:                           > (  (). ) > .
@@ -324,10 +328,10 @@ The next step is to create an SRAM configuration RTL model. This new RTL
 model should have the same name as the configuration file without `-cfg`
 and it should use a `.v` filename extension. We have provided a generic
 SRAM RTL model to make it easier to implement the SRAM configuration RTL
-model. The generic Verilog SRAM RTL model is in `SramGenericVRTL.v`. Go
-ahead and create an SRAM configuration RTL model for the 32x128
-configuration that we used in the SRAM val/rdy wrapper. The file should
-be named `SRAM_32x128_1rw.v`.
+model. The generic Verilog SRAM RTL model is in `SramGeneric.v`. Go ahead
+and create an SRAM configuration RTL model for the 32x128 configuration
+that we used in the SRAM val/rdy wrapper. The file should be named
+`SRAM_32x128_1rw.v`.
 
 Here is what this model should look like if you are using Verilog:
 
@@ -335,7 +339,7 @@ Here is what this model should look like if you are using Verilog:
 `ifndef SRAM_32x128_1rw
 `define SRAM_32x128_1rw
 
-`include "sram/SramGenericVRTL.v"
+`include "sram/SramGeneric.v"
 
 `ifndef SYNTHESIS
 
@@ -349,7 +353,7 @@ module SRAM_32x128_1rw
   output logic [31:0] dout0
 );
 
-  sram_SramGenericVRTL
+  sram_SramGeneric
   #(
     .p_data_nbits  (32),
     .p_num_entries (128)
@@ -371,14 +375,13 @@ endmodule
 `endif /* SRAM_32x128_1rw */
 ```
 
-Notice how this is simply a wrapper around `SramGenericVRTL` instantiated
+Notice how this is simply a wrapper around `SramGeneric` instantiated
 with the desired number of words and bits per word.
 
 **Step 4: Use new SRAM configuration RTL model in top-level SRAM model**
 
 The final step is to modify the top-level SRAM model to select the proper
-SRAM configuration RTL model. If you are using Verilog, you will need to
-modify `SramVRTL.v` like this:
+SRAM configuration RTL model. You need to modify `Sram.v` like this:
 
 ```verilog
 // Add this at the top of the file
@@ -390,7 +393,7 @@ modify `SramVRTL.v` like this:
     else if ( p_data_nbits == 128 && p_num_entries == 256 ) SRAM_128x256_1rw sram (.*);
     else if ( p_data_nbits == 32  && p_num_entries == 128 ) SRAM_32x128_1rw  sram (.*);
     else
-      sram_SramGenericVRTL#(p_data_nbits,p_num_entries) sram (.*);
+      sram_SramGeneric#(p_data_nbits,p_num_entries) sram (.*);
   endgenerate
 ```
 
@@ -404,12 +407,12 @@ configuration to enable using SRAM macros in the ASIC tools.
 **Step 5: Test new SRAM configuration**
 
 The final step is to test the new configuration and verify everything
-works. We have a simple directed test in `SramRTL_test.py` ready for you
+works. We have a simple directed test in `Sram_test.py` ready for you
 to use.
 
 ```python
 def test_direct_32x128( cmdline_opts ):
-  run_test_vector_sim( SramRTL(32, 128), [ header_str,
+  run_test_vector_sim( Sram(32, 128), [ header_str,
     # val type idx  wdata   rdata
     [ 1,  1,  0x00, 0x00000000, '?'        ], # one at a time
     [ 1,  0,  0x00, 0x00000000, '?'        ],
@@ -447,13 +450,13 @@ word, the last word, and then some streaming reads and writes. We can run
 the directed test like this:
 
     % cd $TOPDIR/sim/build
-    % pytest ../sram/test/SramRTL_test.py -k test_direct_32x128
+    % pytest ../sram/test/Sram_test.py -k test_direct_32x128
 
 We have included a helper function that simplifies random testing. You
 can run the random test like this:
 
     % cd $TOPDIR/sim/build
-    % pytest ../sram/test/SramRTL_test.py -k test_random[32-128] -s
+    % pytest ../sram/test/Sram_test.py -k test_random[32-128] -s
 
 And of course we should run all of the tests to ensure we haven't broken
 anything when adding this new configuration.
@@ -476,7 +479,7 @@ through the flow.
     % ../tut8_sram/sram-sim --impl rtl --input random --translate --dump-vcd
     % ls
     ...
-    SramMinionRTL__pickled.v
+    SramMinion__pickled.v
 
 The next step is to run the OpenRAM memory generator to generate the SRAM
 macro corresponding to the desired 32x128 configuration, but we already
@@ -513,8 +516,8 @@ SRAM macro.
 
     dc_shell> set_app_var target_library "$env(ECE5745_STDCELLS)/stdcells.db ../openram-mc/SRAM_32x128_1rw.db"
     dc_shell> set_app_var link_library   "* $env(ECE5745_STDCELLS)/stdcells.db ../openram-mc/SRAM_32x128_1rw.db"
-    dc_shell> analyze -format sverilog ../../sim/build/SramMinionRTL__pickled.v
-    dc_shell> elaborate SramMinionRTL
+    dc_shell> analyze -format sverilog ../../sim/build/SramMinion__pickled.v
+    dc_shell> elaborate SramMinion
     dc_shell> check_design
     dc_shell> create_clock clk -name ideal_clock1 -period 1.5
     dc_shell> compile
@@ -590,7 +593,7 @@ Synopsys/Cadence ASIC tool tutorial.
     % innovus -64
     innovus> set init_mmmc_file "setup-timing.tcl"
     innovus> set init_verilog   "../synopsys-dc/post-synth.v"
-    innovus> set init_top_cell  "SramMinionRTL"
+    innovus> set init_top_cell  "SramMinion"
     innovus> set init_lef_file  "$env(ECE5745_STDCELLS)/rtk-tech.lef \
                                  $env(ECE5745_STDCELLS)/stdcells.lef \
                                  ../openram-mc/SRAM_32x128_1rw.lef"
