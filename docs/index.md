@@ -44,8 +44,8 @@ of the top directory for the project.
     % source setup-ece5745.sh
     % mkdir $HOME/ece5745
     % cd $HOME/ece5745
-    % git clone https://github.com/cornell-ece5745/ece5745-S05-srams
-    % cd ece5745-S05-srams
+    % git clone git@github.com:cornell-ece5745/ece5745-S05-srams sec5
+    % cd sec5
     % TOPDIR=$PWD
 
 OpenRAM Memory Generator
@@ -86,7 +86,7 @@ the directory shown below.
     temperatures    = [25]
 
     route_supplies  = True
-    check_lvsdrc    = True
+    check_lvsdrc    = False
 
     output_path     = "SRAM_32x128_1rw"
     output_name     = "SRAM_32x128_1rw"
