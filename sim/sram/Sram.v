@@ -28,7 +28,6 @@
 `include "sram/SRAM_32x256_1rw.v"
 `include "sram/SRAM_64x64_1rw.v"
 `include "sram/SRAM_128x256_1rw.v"
-`include "sram/SRAM_32x128_1rw.v"
 
 // ''' TUTORIAL TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
 // Include new SRAM configuration RTL model
@@ -71,7 +70,6 @@ module sram_Sram
     if      ( p_data_nbits == 32  && p_num_entries == 256 ) SRAM_32x256_1rw  sram (.*);
     else if ( p_data_nbits == 64  && p_num_entries == 64  ) SRAM_64x64_1rw   sram (.*);
     else if ( p_data_nbits == 128 && p_num_entries == 256 ) SRAM_128x256_1rw sram (.*);
-    else if ( p_data_nbits == 32  && p_num_entries == 128 ) SRAM_32x128_1rw  sram (.*);
 
     else
       sram_SramGeneric#(p_data_nbits,p_num_entries) sram (.*);
